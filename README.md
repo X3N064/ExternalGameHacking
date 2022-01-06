@@ -2,6 +2,4 @@
 
 External Game Hacking Development
 
-Progress : 
-Find Memory Address
-Read & Write Memory
+Progress : Find & Read & Write to Memory Address
