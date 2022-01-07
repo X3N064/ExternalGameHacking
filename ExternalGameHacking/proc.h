@@ -1,8 +1,6 @@
 #pragma once
 
-#include <vector>
-#include <windows.h>
-#include <TlHelp32.h>
+#include "stdafx.h"
 
 DWORD GetProcId(const wchar_t* procName);
 

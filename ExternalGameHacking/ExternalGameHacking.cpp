@@ -1,50 +1,106 @@
-#include <iostream>
-#include <string>
-#include <Windows.h>
-#include <vector>
+
 #include "proc.h"
+#include "mem.h"
 
 //examples
 unsigned int ex1, ex2, ex3 = 0x0;
 
 int main()
 {
+	//Get Handle to process
+	HANDLE hProcess = 0;
+	
+	//variables
+	uintptr_t moduleBase = 0, localPlayerPtr = 0, healthAddr = 0;
+	bool bHealth = false, bAmmo = false, bRecoil = false;
+	const int newValue = 99999;
+
 	//get process id from target program
 	DWORD procId = GetProcId(L"ex");
 
-	//get modulebase addr
-	uintptr_t moduleBase = GetModuleBaseAddress(procId, L"ex");
+	if (procId)
+	{
 
-	//Get Handle to process
-	HANDLE hProcess = 0;
-	hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
+		hProcess = OpenProcess(PROCESS_ALL_ACCESS, NULL, procId);
 
-	//resolve base addr of the pointer chain
-	uintptr_t dynamicPtrBaseAddr = moduleBase + ex1;
 
-	std::cout << "DynamicPtrBaseAddr = " << "0x" << std::hex << dynamicPtrBaseAddr << std::endl;
+		//get modulebase addr
+		moduleBase = GetModuleBaseAddress(procId, L"ex");
 
-	//resolve the pointer chain
-	std::vector<unsigned int> offsets = { ex1, ex2, ex3 };
+		localPlayerPtr = moduleBase + 0x0; //ex
 
-	uintptr_t addr = FindDMAAddy(hProcess, dynamicPtrBaseAddr, offsets);
+		healthAddr = FindDMAAddy(hProcess, localPlayerPtr, { 0x0 }); //ex
 
-	//read the value
-	int value = 0;
+	}
 
-	ReadProcessMemory(hProcess, (byte*)addr, &value, sizeof(value), nullptr);
-	std::cout << "Original value = " << std::dec << value << std::endl;
+	else
+	{
+		std::cout << "Process not found, press enter to exit\n";
 
-	//write the value
-	int newValue = 999999999; //ex;
-	WriteProcessMemory(hProcess, (byte*)addr, &newValue, sizeof(newValue), nullptr);
+		//pause
+		getchar();
+		return 0;
+	}
 
-	//assert
-	ReadProcessMemory(hProcess, (byte*)addr, &value, sizeof(value), nullptr);
-	std::cout << "New value = " << std::dec << value << std::endl;
+	DWORD dwExit = 0;
+	while (GetExitCodeProcess(hProcess, &dwExit) && dwExit == STILL_ACTIVE)
+	{
+		if (GetAsyncKeyState(VK_NUMPAD1) & 1)
+		{
+			bHealth = !bHealth;
 
+		}
+		if (GetAsyncKeyState(VK_NUMPAD2) & 1)
+		{
+			bAmmo = !bAmmo;
+			if (bAmmo)
+			{
+				//	\xFF\x06 = inc [esi]
+				mem::PatchEx((BYTE*)(moduleBase + 0x0), (BYTE*)"\xFF\x06", 2, hProcess); //ex
+
+			}
+			else
+			{
+				//	\xFF\x0E = dec [esi]
+				mem::PatchEx((BYTE*)(moduleBase + 0x0), (BYTE*)"\xFF\x0E", 2, hProcess); //ex
+			}
+		}
+		if (GetAsyncKeyState(VK_NUMPAD3) & 1)
+		{
+			bRecoil = !bRecoil;
+
+			if (bRecoil)
+			{
+				mem::NopEx((BYTE*)(moduleBase + 0x0), 10, hProcess); //ex
+			}
+			else
+			{
+				//	\x tells the compiler to use the literal bytes we're defining in the char array
+				mem::PatchEx((BYTE*)(moduleBase + 0x0), (BYTE*)"\x50\x8d\x4c\x24\x1c\x51\x8b\xce\xff\xd2", 10, hProcess); //ex
+			}
+		}
+		if (GetAsyncKeyState(VK_INSERT) & 1)
+		{
+			return 0;
+		}
+
+		//continuous write or freeze
+		if (bHealth)
+		{
+			mem::PatchEx((BYTE*)healthAddr, (BYTE*)&newValue, sizeof(newValue), hProcess);
+		}
+
+		Sleep(10); 
+	}
+
+	//exit
+	std::cout << "Process not found, press enter to exit\n";
+	
 	//pause
-
 	getchar();
 	return 0;
+
+	
+
+
 }
