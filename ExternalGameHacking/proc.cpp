@@ -92,4 +92,21 @@ uintptr_t GetModuleBaseAddress(DWORD procId, const wchar_t* modName)
     CloseHandle(hSnap);
     return modBaseAddr;
 }
+
+ReadProcessMemory(handle, (LPVOID)pointeraddress, &newpointeraddress, sizeof(newpointeraddress), NULL);
+ReadProcessMemory(handle, (LPVOID)(newpointeraddress+ offset[0]), &newpointeraddress, sizeof(newpointeraddress), NULL);
+ReadProcessMemory(handle, (LPVOID)(newpointeraddress + offset[1]), &newpointeraddress, sizeof(newpointeraddress), NULL);
+ReadProcessMemory(handle, (LPVOID)(newpointeraddress + offset[2]), &newpointeraddress, sizeof(newpointeraddress), NULL);
+
+-----------------------Internal cheat example-----------------------
+uintptr_t FindDMAAddy(uintptr_t ptr, std::vector<unsigned int> offsets)
+{
+    uintptr_t addr = ptr;
+    for (unsigned int i = 0; i < offsets.size() ; ++i)
+    {
+        addr = *(uintptr_t*)addr;
+        addr += offsets[i];
+    }
+    return addr;
+}
 */
