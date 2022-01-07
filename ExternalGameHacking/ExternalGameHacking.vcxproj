@@ -141,10 +141,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ExternalGameHacking.cpp" />
+    <ClCompile Include="mem.cpp" />
     <ClCompile Include="proc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mem.h" />
     <ClInclude Include="proc.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
